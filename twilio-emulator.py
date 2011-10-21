@@ -17,7 +17,7 @@ class TwiMLSyntaxError(Exception):
         self.col = col
         self.doc = doc
         self.line = self.doc.split("\n")[self.lineno-2]
-        
+
     def __str__(self):
         return "TwiMLSyntaxError at line %i col %i near %s" \
             % (self.lineno, self.col, self.line)
@@ -57,7 +57,7 @@ class ResponseLogger(object):
         self.buf.write("[%s] %s\n" % (datetime.now(), str))
         if self.verbose:
             print str
-        
+
     def to_file(self):
         f = open(self.filename, "w+")
         f.write(str(self))
@@ -71,13 +71,13 @@ def getResponse(url, method, digits):
     elif method == 'GET' and digits:
         purl = urlparse.urlparse(url)
         url = "%s?%s&%s" % \
-            ( purl.geturl(), 
-              purl.query , 
+            ( purl.geturl(),
+              purl.query ,
               urllib.urlencode(
                 {'Digits': digits}
                 )
               )
-        
+
     logger.notice('[%s] %s \n%s' % (method, url, data))
 
     try:
@@ -96,7 +96,7 @@ def end_pause():
 def input_timeout(*args):
     print
     logger.notice("[Gather timed out]")
-    
+
 def exit_handler(*args):
     logger.to_file()
     sys.stdout.flush()
@@ -142,17 +142,17 @@ def Gather(node):
 
     if node.hasChildNodes():
         [processNode(child) for child in node.childNodes]
-           
+
     prompt = "[Gather timeout=%s numDigits=%s]> " % \
                        (timeout,
                         numDigits)
-                        
+
     digits = timed_input(prompt, int(timeout))
     if not digits:
         return None
 
-    request = { 
-        'action' : action, 
+    request = {
+        'action' : action,
         'method' : method,
         'digits' : digits
         }
@@ -180,7 +180,7 @@ def Play(node):
     if len(node.childNodes) != 1:
         logger.error("Multiple child nodes for play illegal")
         exit_handler()
-    
+
     logger.output("[Play] %s" % node.childNodes[0].data)
 
     return None
@@ -190,7 +190,7 @@ def Pause(node):
     if node.hasAttributes() and \
             node.attributes.has_key('length'):
         length = node.attributes['length'].value
-    
+
     logger.output("[Pause length=%s]" % length)
     t = Timer(float(length), end_pause)
     t.start()
@@ -227,8 +227,8 @@ def Redirect(node):
 
     logger.notice("[Redirect] %s" % node.childNodes[0].data)
 
-    request = { 
-        'action' : node.childNodes[0].data, 
+    request = {
+        'action' : node.childNodes[0].data,
         'method' : 'GET',
         'digits' : None
         }
@@ -273,7 +273,7 @@ def Record(node):
 def Hangup(node):
     logger.output("[Hangup]")
     exit_handler()
-    
+
 def processNode(node):
     action = node.nodeName.encode('ascii')
     if node.nodeType == node.TEXT_NODE:
@@ -292,7 +292,7 @@ def emulate(url, method = 'GET', digits = None):
     if not response:
         logger.error('[Emulation Failed to start]')
         exit_handler()
-    
+
     try:
         rdoc = parseString(response)
     except ExpatError, e:
@@ -303,12 +303,12 @@ def emulate(url, method = 'GET', digits = None):
     except IndexError, e:
         logger.error('[No response node] exiting')
         exit_handler()
-    
+
     if not respNode.hasChildNodes():
         #hangup
         logger.notice('Hanging up')
         exit_handler()
-        
+
     nodes = respNode.childNodes
     for node in nodes:
         if node.nodeType == node.TEXT_NODE:
@@ -321,8 +321,8 @@ def emulate(url, method = 'GET', digits = None):
             try:
                 if(request['action'] == ''):
                     request['action'] = url
-                emulate(request['action'], 
-                        request['method'], 
+                emulate(request['action'],
+                        request['method'],
                         request['digits'])
             except TwiMLSyntaxError, e:
                 logger.error(e)
@@ -331,7 +331,7 @@ def emulate(url, method = 'GET', digits = None):
 def main():
     signal.signal(signal.SIGALRM, input_timeout)
     signal.signal(signal.SIGINT, exit_handler)
-    
+
     usage = "usage: %prog [options] [url]"
     parser = OptionParser(usage)
     parser.add_option("-v", "--verbose",
